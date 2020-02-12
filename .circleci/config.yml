@@ -1,0 +1,137 @@
+version: 2
+machine:
+  environment:
+      JAVA_HOME: /usr/lib/jvm/java-9-oracle
+jobs:
+  node:
+    working_directory: ~/react-sample-web
+    docker:
+      - image: reactnativecommunity/react-native-android:latest
+      # - image: circleci/openjdk:8-jdk-stretch
+      # - image: circleci/ruby:2.4-node
+      # - image: circleci/android:api-27-node8-alpha
+      
+    steps:
+
+      - checkout
+
+      - add_ssh_keys:
+          fingerprints:
+            - "9e:64:da:ce:0c:8d:26:67:07:cf:f8:36:b1:22:02:19"
+
+      
+      # - run:
+      #     name: clear cache
+      #     command: yarn cache clean
+
+      # - restore_cache:
+      #     key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
+
+      # - restore_cache:
+      #     key: bundle-v1-{{ checksum "android/Gemfile.lock" }}-{{ arch }}
+
+      # - restore_cache:
+      #     key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
+
+      # - restore_cache:
+      #     key: node-v1-{{ checksum "package.json" }}-{{ arch }}
+          
+      # - run: 
+      #     name: "yarn install"
+      #     command: yarn
+      
+      # - run: 
+      #     name: "android-bundling"
+      #     command: yarn android-bundle
+
+      # - run: 
+      #     name: "install bundler"
+      #     command: cd android && gem install bundler
+
+      # - run: 
+      #     name: "bundle install"
+      #     command: cd android && bundle install
+
+      # - run: 
+      #     name: "fastlane test Android Apk"
+      #     command: yarn androidApk
+
+      # - run: 
+      #     name: "fastlane test iOS AdHoc"
+      #     command: cd ios && fastlane adhoc
+
+
+      - run:
+          name: clear cache
+          command: eval 'ssh-agent' && ssh-add ~/.ssh/id_rsa
+
+      - run: 
+          name: "chmod git"
+          command: chmod 755 upload_dev_git.sh
+
+      - run: 
+          name: "get config1"
+          command: git config --global user.name "kraksin"
+
+      - run: 
+          name: "get config2"
+          command: git config --global user.email "kraksin12@gmail.com"
+
+      - run: 
+          name: "get clone"
+          command: git clone git@github.com:operate2v/operate2v.github.io.git
+
+      - run: 
+          name: "make test"
+          command: cd operate2v.github.io && touch test.txt
+
+      - run: 
+          name: "add file"
+          command: git add *
+
+      - run: 
+          name: "git commit"
+          command: git commit -m "abb test add"
+
+      - run: 
+          name: "git push"
+          command: git push origin master
+
+    
+      - save_cache:
+          key: bundle-v1-{{ checksum "android/Gemfile.lock" }}-{{ arch }}
+          paths:
+            - vendor/bundle
+
+      - save_cache:
+          key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
+          paths:
+            - vendor/bundle
+            
+      - save_cache:
+          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
+          paths:
+            - ~/.cache/yarn
+
+      - save_cache:
+          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
+          paths:
+            - node_modules
+
+      - persist_to_workspace:
+          root: ~/contentfly-app
+          paths:
+            - node_modules
+
+      - store_test_results:
+          path: test-results
+
+      - store_artifacts:
+          path: test-results
+
+workflows:
+  version: 2
+  node-android-ios:
+    jobs:
+      - node
+      
